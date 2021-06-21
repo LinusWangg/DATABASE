@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/1.subchannel.5378e0e919d5997b0ab8c43e368711d656adccbc.js" as="script">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/css/subchannel.0.5378e0e919d5997b0ab8c43e368711d656adccbc.css" as="style">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/subchannel.5378e0e919d5997b0ab8c43e368711d656adccbc.js" as="script">
+    <link rel="stylesheet" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/css/subchannel.0.5378e0e919d5997b0ab8c43e368711d656adccbc.css">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+    <script src="/static/js/moment-with-locales.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <link href="//s1.hdslb.com/bfs/static/jinkela/space/css/space.3.5e919b9c6502223dc9f88458bce147c4268addff.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+    <script src="https://cdn.bootcss.com/echarts/4.2.1-rc1/echarts.min.js"></script>
+  <style>
+      .el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 200px;
+    min-height: 400px;
+  }
+  .bg-purple-dark {
+    background: #FFFFFF;
+  }
+  .grid-content {
+    border-radius: 4px;
+    min-height: 36px;
+  }
+  .el-dropdown-link {
+    cursor: pointer;
+    color: #409EFF;
+  }
+  .el-icon-arrow-down {
+    font-size: 12px;
+  }
+  </style>
+  <script src="https://cdn.staticfile.org/vue/2.6.12/vue.min.js"></script>
+  <!-- import Vue before Element -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- import JavaScript -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    var user_name = "{{user_name|safe}}";
+    var page = 1;
+    function getQueryString(name) {
+    var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+    var r = window.location.search.substr(1).match(reg);
+    if(r!=null)return  decodeURI(r[2]); return null;
+    }
+    window.onload = function(){
+      new Vue({
+        el:'#app',
+        data:{
+            Arts:[],
+            user_avatar:"",
+            user_name:""
+        },
+        mounted(){
+          this.$nextTick(()=>{
+            var that=this;
+            var find = null;
+            var option = {
+            backgroundColor:'#dddd',
+            visualMap: {
+                show: true,
+                min: 0,
+                max: 10,
+                left: 'right',
+            },
+            calendar: {
+                range: '2021'
+            },
+            series: {
+                type: 'heatmap',
+                coordinateSystem: 'calendar',
+                data: "",
+            },
+            tooltip: {
+              trigger: 'axis',
+              axisPointer: {
+              type: 'cross',
+              crossStyle: {
+                color: '#999'
+              }
+              },
+            }
+            };
+            find = getQueryString("user_name");
+            if(find == null){
+                find = "{{user_name|safe}}";
+            }
+            $.ajax({
+                url:"http://127.0.0.1:8000/article/getmine",
+                type:"post",
+                data:JSON.stringify({
+                    user_name:find,
+                    page:page,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.Arts = result['data']['Arts'];
+                }
+            })
+            $.ajax({
+                url:"http://127.0.0.1:8000/user/userinfo",
+                type:"post",
+                data:JSON.stringify({
+                  user_name:find
+                }),
+                dataType:"json",
+                success:function(result){
+                  that.user_avatar = result['data']['user_avatar'];
+                  that.user_name = result['data']['user_name'];
+                }
+            })
+            $.ajax({
+              url:"http://127.0.0.1:8000/article/timedata",
+              type:"post",
+              data:JSON.stringify({
+                user_name:find
+              }),
+              dataType:"json",
+              success:function(result){
+                var myecharts = echarts.init(document.getElementById("echarts"));
+                option['series']['data'] = result['data'];
+                console.log(option);
+                myecharts.setOption(option);
+              }
+            })
+          })
+        },
+        methods:{
+            submit(val){
+                var that = this;
+                var find = null;
+                find = getQueryString("user_name");
+                if(find == null){
+                    find = "{{user_name|safe}}";
+                }
+                $.ajax({
+                url:"http://127.0.0.1:8000/article/getmine",
+                type:"post",
+                data:JSON.stringify({
+                    user_name:find,
+                    page:val,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.Arts = result['data']['Arts'];
+                }
+                })
+            },
+            Pagechange(val){
+                var that = this;
+                that.submit(val);
+            },
+            handleCommand(command){
+              if(command.substring(0,6) == "delete"){
+                var cont=prompt("请输入密码","");
+                if(cont!=null||cont!=""){
+                $.ajax({
+                url:"http://127.0.0.1:8000/article/deletemine",
+                type:"post",
+                data:JSON.stringify({
+                    user_name:"{{user_name|safe}}",
+                    user_pwd:cont,
+                    art_title:command.substring(6),
+                }),
+                dataType:"json",
+                success:function(result){
+                    if(result['data']['Allow']){
+                      alert("删除成功");
+                      location.reload();
+                    }
+                    else{
+                      alert("权限不足");
+                    }
+                }
+                })
+              }
+              }
+              else if(command.substring(0,6) == "modify"){
+                window.location.replace("http://127.0.0.1:8000/article/modify?art_title="+command.substring(6));
+              }
+            }
+        },
+        delimiters:['${', '}']
+      })
+    }
+  </script>
+</head>
+<body style="height:2000px">
+    <el-container id="app">
+      <el-aside width="210px">
+        <el-menu class="el-menu-vertical-demo" :collapse="false">
+            {% if user_name == "wywnb" %}
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/signup_index">登录</a></span></el-menu-item>
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/signin_index">注册</a></span></el-menu-item>
+            {% else %}
+            <el-menu-item><span>{{user_name|safe}}</span></el-menu-item>
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/logout">退出</a></span></el-menu-item>
+            {% endif %}
+            {% for cont in content %}
+            <el-menu-item>
+                <template #title>
+                  <i class="el-icon-location"></i>
+                  <span><a href={{cont.url|safe}}>{{cont.head|safe}}</a></span>
+                </template>
+            </el-menu-item>
+            {% endfor %}
+      </el-aside>
+      <el-main>
+        <div class="h">
+  <div class="wrapper">
+    <div class="h-inner" style="background-image: url(http://127.0.0.1:8000/media/avatar/3.jpg);">
+      <div class="h-gradient"></div>
+      <div class="h-user">
+        <div class="h-info clearfix">
+          <div class="h-avatar">
+            <img :src='user_avatar' id="h-avatar">
+          </div>
+          <div class="h-basic"><div>
+          <span id="h-name">${user_name}</span>
+          <span id="h-ceritification" class="icon"></span>
+          <span id="h-gender" class="icon gender male"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="echarts" style="width:100%;height:200px;"></div>
+<div style="width:100%;height:20px;background-color:#dddd;"></div>
+        <div class="vd-list-cnt">
+            <ul class="vd-list mod-2">
+                <li v-for="art in Arts">
+                    <div class="l-item">
+                        <div class="l">
+                            <div class="spread-module">
+                                <a href="//www.bilibili.com/video/BV1ay4y137jg" target="_blank">
+                                    <div class="pic">
+                                        <div class="lazy-img">
+                                            <img :src="art.art_pic">
+                                        </div>
+                                    </div>
+                                    <p class="num">
+
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="r">
+                            <a :href="'http://127.0.0.1:8000/article/blog?title='+art.art_title" target="_blank" class="title">
+                                ${art.art_title}
+                            </a>
+                            <div class="v-desc">
+                                ${art.art_time}
+                            </div>
+                            <div class="v-info">
+
+                            </div>
+                            <div class="up-info">
+                                <a :href="'http://127.0.0.1:8000/article/getauthorart?user_name='+art.art_author" target="_blank" class="v-author">
+                                ${art.art_author}
+                                </a>
+                            </div>
+                        </div>
+                        <div v-if="user_name == '{{user_name|safe}}'">
+                        <el-dropdown @command="handleCommand">
+                        <span class="el-dropdown-link">
+                          更多<i class="el-icon-arrow-down el-icon--right"></i>
+                        </span>
+                        <el-dropdown-menu slot="dropdown">
+                        <div id="elmenu"></div>
+                        <el-dropdown-item :command="'delete'+art.art_title">删除</el-dropdown-item>
+                        <el-dropdown-item :command="'modify'+art.art_title">修改</el-dropdown-item>
+                        </el-dropdown-menu>
+                        </el-dropdown>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <el-pagination
+        background
+        layout="pager"
+        :total="5000"
+        @current-change="Pagechange">
+        </el-pagination>
+      </el-main>
+    </el-container>
+</body>
+  
+</html>

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+  <style>
+  .el-header {
+    background-color: #B3C0D1;
+    color: #333;
+    line-height: 60px;
+  }
+  
+  .el-aside {
+    color: #333;
+  }
+  </style>
+  <script src="https://cdn.staticfile.org/vue/2.6.12/vue.min.js"></script>
+  <!-- import Vue before Element -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- import JavaScript -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+			var page = 1;
+			window.onload = function(){
+      new Vue({
+        el:'#app',
+        data(){
+          return {
+            tableData:this.Arts
+          }
+        },
+        mounted(){
+          this.$nextTick(()=>{
+            var that=this;
+            $.ajax({
+                url:"http://127.0.0.1:8000/show_comment",
+                type:"post",
+                data:JSON.stringify({
+                    page:page,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.tableData = result['data']['comments'];
+                }
+            })
+          })
+        },
+        methods:{
+          submit:function(val){
+            var that = this;
+            $.ajax({
+              url:"http://127.0.0.1:8000/show_comment",
+                type:"post",
+                data:JSON.stringify({
+                    page:val,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.tableData = result['data']['comments'];
+                }
+            })
+          },
+          Pagechange(val){
+            var that = this;
+            that.submit(val);
+          },
+          handleClick(val){
+            $.ajax({
+              url:"http://127.0.0.1:8000/dele_comment",
+                type:"post",
+                data:JSON.stringify({
+                    art_title:val['comment_id'],
+                }),
+                dataType:"json",
+                success:function(result){
+                    alert('成功');
+                    location.reload();
+                }
+            })
+          },
+          touser(){
+            window.location.href = "http://127.0.0.1:8000/1";
+          },
+          tocomment(){
+              window.location.href = "http://127.0.0.1:8000/2";
+          },
+          toart(){
+            window.location.href = "http://127.0.0.1:8000";
+          },
+          togive(){
+            window.location.href = "http://127.0.0.1:8000/3";
+          }
+        },
+        delimiters:['${', '}']
+      })
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <el-container style="height: 1000px; border: 1px solid #eee">
+      <el-aside width="200px" style="background-color: rgb(238, 241, 246)">
+        <el-menu :default-openeds="['1', '3']">
+          <el-submenu index="1">
+            <template slot="title"><i class="el-icon-message"></i>类别</template>
+            <el-menu-item-group>
+              <el-menu-item index="1-1" @click="touser()">用户</el-menu-item>
+              <el-menu-item index="1-2" @click="tocomment()">评论</el-menu-item>
+              <el-menu-item index="1-3" @click="toart()">文章</el-menu-item>
+              <el-menu-item index="1-4" @click="togive()">管理员</el-menu-item>
+            </el-menu-item-group>
+          </el-submenu>
+        </el-menu>
+      </el-aside>
+      
+      <el-container>
+        <el-header style="text-align: right; font-size: 12px">
+          <el-dropdown>
+            <i class="el-icon-setting" style="margin-right: 15px"></i>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item>查看</el-dropdown-item>
+              <el-dropdown-item>新增</el-dropdown-item>
+              <el-dropdown-item>删除</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+          <span>admin</span>
+        </el-header>
+        
+        <el-main>
+          <el-table :data="tableData">
+            <el-table-column prop="comment_id" label="评论序号" width="200">
+            </el-table-column>
+            <el-table-column prop="art_title" label="评论文章" width="200">
+            </el-table-column>
+            <el-table-column prop="commentor" label="评论人" width="200">
+            </el-table-column>
+            <el-table-column prop="comment_content" label="评论内容" width="200">
+            </el-table-column>
+            <el-table-column prop="comment_time" label="评论时间" width="200">
+            </el-table-column>
+            <el-table-column
+            fixed="right"
+            label="操作"
+            width="100">
+            <template slot-scope="scope">
+            <el-button type="text" size="small">查看</el-button>
+            <el-button @click="handleClick(scope.row)" type="text" size="small">删除</el-button>
+            </template>
+            </el-table-column>
+          </el-table>
+          <el-pagination
+        background
+        layout="pager"
+        :total="5000"
+        @current-change="Pagechange">
+        </el-pagination>
+        </el-main>
+      </el-container>
+    </el-container>
+    </div>
+</body>
+
+</html>

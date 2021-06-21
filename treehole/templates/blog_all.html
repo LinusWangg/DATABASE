@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <!-- import CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/1.subchannel.5378e0e919d5997b0ab8c43e368711d656adccbc.js" as="script">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/css/subchannel.0.5378e0e919d5997b0ab8c43e368711d656adccbc.css" as="style">
+    <link rel="preload" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/subchannel.5378e0e919d5997b0ab8c43e368711d656adccbc.js" as="script">
+    <link rel="stylesheet" href="//s1.hdslb.com/bfs/static/jinkela/subchannel/css/subchannel.0.5378e0e919d5997b0ab8c43e368711d656adccbc.css">
+    <link href="//s1.hdslb.com/bfs/static/jinkela/space/css/space.3.5e919b9c6502223dc9f88458bce147c4268addff.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.js"></script>
+    <script src="/static/js/moment-with-locales.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/css/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/bootstrap-datetimepicker/4.17.47/js/bootstrap-datetimepicker.min.js"></script>
+  <style>
+      .el-menu-vertical-demo:not(.el-menu--collapse) {
+    width: 200px;
+    min-height: 400px;
+  }
+  .bg-purple-dark {
+    background: #FFFFFF;
+  }
+  .grid-content {
+    border-radius: 4px;
+    min-height: 36px;
+  }
+  </style>
+  <script src="https://cdn.staticfile.org/vue/2.6.12/vue.min.js"></script>
+  <!-- import Vue before Element -->
+  <script src="https://unpkg.com/vue/dist/vue.js"></script>
+  <!-- import JavaScript -->
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+  <script>
+    $('#datetimepicker1').datetimepicker({
+        format: 'YYYY-MM-DD',
+        locale: moment.locale('zh-cn'),
+        defaultDate: "1990-1-1"
+    });
+    $('#datetimepicker2').datetimepicker({
+        format: 'YYYY-MM-DD',
+        locale: moment.locale('zh-cn'),
+        defaultDate: "1990-1-1"
+    });
+
+    $(function () {
+        $('#datetimepicker1').datetimepicker({
+            format: 'YYYY-MM-DD',
+            locale: moment.locale('zh-cn')
+        });
+        $('#datetimepicker2').datetimepicker({
+            format: 'YYYY-MM-DD',
+            locale: moment.locale('zh-cn')
+        });
+    });
+    </script>
+  <script>
+    var user_name = "{{user_name|safe}}";
+    var page = 1;
+    var cs = 0;
+    window.onload = function(){
+      new Vue({
+        el:'#app',
+        data(){
+          return {
+            user_avatar:"",
+            user_name:"",
+            radio:'99',
+            Arts:[]
+          }
+        },
+        mounted(){
+          this.$nextTick(()=>{
+            var that=this;
+            $.ajax({
+                url:"http://127.0.0.1:8000/article/getall",
+                type:"post",
+                data:JSON.stringify({
+                    page:page,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.Arts = result['data']['Arts'];
+                }
+            })
+            $.ajax({
+                url:"http://127.0.0.1:8000/user/userinfo",
+                type:"post",
+                data:JSON.stringify({
+                  user_name:user_name
+                }),
+                dataType:"json",
+                success:function(result){
+                  that.user_avatar = result['data']['user_avatar'];
+                  that.user_name = result['data']['user_name'];
+                }
+            })
+          })
+        },
+        methods:{
+          submit:function(val){
+            cs = 1;
+            var that = this;
+            var keyword = document.getElementById("kw").value;
+            var timefrom = $("input[name=time_from]").val();
+            if(timefrom==""){
+              timefrom="1990-1-1";
+            }
+            var timeto = $("input[name=time_to]").val();
+            if(timeto==""){
+              timeto="2050-1-1";
+            }
+            $.ajax({
+              url:"http://127.0.0.1:8000/article/search",
+                type:"post",
+                data:JSON.stringify({
+                    page:val,
+                    key_word:keyword,
+                    time_from:timefrom,
+                    time_to:timeto,
+                    type:that.radio,
+                }),
+                dataType:"json",
+                success:function(result){
+                    that.Arts = result['data']['Arts'];
+                }
+            })
+          },
+          Pagechange(val){
+            var that = this;
+              that.submit(val);
+          }
+        },
+        delimiters:['${', '}']
+      })
+    }
+  </script>
+</head>
+<body style="height:2000px">
+    <el-container id="app">
+      <el-aside width="210px">
+        <el-menu class="el-menu-vertical-demo" :collapse="false">
+            {% if user_name == "wywnb" %}
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/signup_index">登录</a></span></el-menu-item>
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/signin_index">注册</a></span></el-menu-item>
+            {% else %}
+            <el-menu-item><span>{{user_name|safe}}</span></el-menu-item>
+            <el-menu-item><span><a href="http://127.0.0.1:8000/user/logout">退出</a></span></el-menu-item>
+            {% endif %}
+            {% for cont in content %}
+            <el-menu-item>
+                <template #title>
+                  <i class="el-icon-location"></i>
+                  <span><a href={{cont.url|safe}}>{{cont.head|safe}}</a></span>
+                </template>
+            </el-menu-item>
+            {% endfor %}
+      </el-aside>
+      <el-main>
+      <div class="h">
+  <div class="wrapper">
+    <div class="h-inner" style="background-image: url(http://127.0.0.1:8000/media/avatar/3.jpg);">
+      <div class="h-gradient"></div>
+      <div class="h-user">
+        <div class="h-info clearfix">
+          <div class="h-avatar">
+            <img :src='user_avatar' id="h-avatar">
+          </div>
+          <div class="h-basic"><div>
+          <span id="h-name">${user_name}</span>
+          <span id="h-ceritification" class="icon"></span>
+          <span id="h-gender" class="icon gender male"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+        <el-row :gutter="20">
+          <el-col :span="8"><input type="text" name="title" class="form-control" id="kw" placeholder="关键词" required=""></el-col>
+          <el-col :span="8">
+            <div class='input-group date' id='datetimepicker1'>
+            <input type='text' class="form-control required" name="time_from"/>
+            <span class="input-group-addon">
+                <span class="glyphicon glyphicon-calendar"></span>
+            </span>
+            </div>
+          </el-col>
+            <el-col :span="8">
+              <div class='input-group date' id='datetimepicker2'>
+              <input type='text' class="form-control required" name="time_to"/>
+              <span class="input-group-addon">
+                  <span class="glyphicon glyphicon-calendar"></span>
+              </span>
+            </div>
+          </el-col>
+
+        </el-row>
+        <div style="height:20px"></div>
+        <el-row :gutter="20">
+          <el-col :span="16">
+          <el-radio v-model="radio" label="2">动画</el-radio>
+          <el-radio v-model="radio" label="1">游戏</el-radio>
+          <el-radio v-model="radio" label="28">生活</el-radio>
+          <el-radio v-model="radio" label="3">影视</el-radio>
+          <el-radio v-model="radio" label="17">科技</el-radio>
+          <el-radio v-model="radio" label="41">笔记</el-radio>
+          <el-radio v-model="radio" label="16">小说</el-radio>
+          <el-radio v-model="radio" label="99">全部</el-radio>
+          </el-col>
+           <el-col :span="6"><a type="button" v-on:click="submit(1)" class="btn btn-sm btn-success"
+            style="width: 120px; margin-bottom: 30px">提交</a></el-col>
+        </el-row>
+        <div class="vd-list-cnt">
+            <ul class="vd-list mod-2">
+                <li v-for="art in Arts">
+                    <div class="l-item">
+                        <div class="l">
+                            <div class="spread-module">
+                                <a :href="'/article/blog?title='+art.art_title" target="_blank">
+                                    <div class="pic">
+                                        <div class="lazy-img">
+                                            <img :src="art.art_pic">
+                                        </div>
+                                    </div>
+                                    <p class="num">
+                                        
+                                    </p>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="r">
+                            <a :href="'/article/blog?title='+art.art_title" target="_blank" title="" class="title">
+                                ${art.art_title}
+                            </a>
+                            <div class="v-desc">
+                                ${art.art_time}
+                            </div>
+                            <div class="v-info">
+                                
+                            </div>
+                            <div class="up-info">
+                              <a :href="'/article/getauthorart?user_name='+art.art_author" target="_blank" class="v-author">
+                                ${art.art_author}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <el-pagination
+        background
+        layout="pager"
+        :total="50000"
+        @current-change="Pagechange">
+        </el-pagination>
+      </el-main>
+    </el-container>
+</body>
+  
+</html>
